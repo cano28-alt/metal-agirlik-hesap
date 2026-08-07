@@ -363,6 +363,7 @@
   .li-del{
     background:none;
     border:1px solid var(--line);
+    border-radius:10px;
     width:26px;height:26px;
     font-family:var(--mono);
     font-size:15px;
@@ -377,8 +378,14 @@
     transition:background .12s,color .12s,border-color .12s;
   }
   .li-del:hover{background:#1a1e21;color:#fff;border-color:#1a1e21}
-  .row-total{font-weight:700;border-top:2px solid var(--ink)}
-  .row-total span:last-child{color:var(--ink)}
+  #listRows,#subtotalRows{border-radius:16px;overflow:hidden}
+  .row-total{
+    font-weight:700;
+    background:rgba(242,195,0,0.08);
+    border-top:1px solid rgba(242,195,0,0.3);
+  }
+  .row-total span:first-child{font-size:14px}
+  .row-total span:last-child{color:#f2c300;font-size:24px}
 
   /* ---- boşluklar ---- */
   .holes-wrap{margin-top:18px;padding-top:16px;border-top:1px solid var(--line-soft)}
