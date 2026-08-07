@@ -130,7 +130,30 @@
   .density-note b{color:var(--ink);font-weight:600}
 
   /* ---- şekil seçimi ---- */
-  .shapes{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+  .shape-toggle{
+    width:100%;
+    background:#fff;
+    border:1px solid var(--line);
+    padding:11px 12px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family:var(--mono);
+    font-size:13px;
+    color:var(--ink);
+    text-align:left;
+    margin-bottom:0;
+    transition:border-color .12s;
+  }
+  .shape-toggle:hover{border-color:var(--ink)}
+  .shape-toggle svg.shape-toggle-icon{stroke:var(--ink);fill:none;stroke-width:1.4;flex:none}
+  .shape-toggle .shape-toggle-name{flex:1}
+  .shape-toggle .shape-toggle-arrow{stroke:var(--mute);fill:none;stroke-width:1.6;flex:none;transition:transform .15s}
+  .shape-toggle[aria-expanded="true"] .shape-toggle-arrow{transform:rotate(180deg)}
+  .shape-toggle[aria-expanded="true"]{border-bottom-color:transparent}
+  .shapes{display:none;grid-template-columns:repeat(5,1fr);gap:7px;border:1px solid var(--line);border-top:none;padding:10px;background:var(--paper)}
+  .shapes.open{display:grid}
   .shape{
     background:#fff;
     border:1px solid var(--line);
@@ -422,6 +445,11 @@
 
       <div class="panel">
         <div class="panel-title">Parça biçimi</div>
+        <button type="button" class="shape-toggle" id="shapeToggle" aria-expanded="false" aria-controls="shapes">
+          <svg class="shape-toggle-icon" id="shapeToggleIcon" viewBox="0 0 24 24" width="20" height="20"></svg>
+          <span class="shape-toggle-name" id="shapeToggleName">—</span>
+          <svg class="shape-toggle-arrow" viewBox="0 0 24 24" width="14" height="14"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
         <div class="shapes" id="shapes"></div>
       </div>
 
@@ -717,6 +745,25 @@ MATERIALS.forEach(m=>{
 
 /* ---- biçim butonlarını kur ---- */
 const shapesBox=document.getElementById('shapes');
+const shapeToggle=document.getElementById('shapeToggle');
+const shapeToggleIcon=document.getElementById('shapeToggleIcon');
+const shapeToggleName=document.getElementById('shapeToggleName');
+
+function setShapesOpen(open){
+  shapesBox.classList.toggle('open',open);
+  shapeToggle.setAttribute('aria-expanded',open);
+}
+
+function updateShapeToggle(){
+  const s=SHAPES[currentShape];
+  shapeToggleIcon.innerHTML=s.icon;
+  shapeToggleName.textContent=s.name;
+}
+
+shapeToggle.addEventListener('click',()=>{
+  setShapesOpen(!shapesBox.classList.contains('open'));
+});
+
 Object.entries(SHAPES).forEach(([key,s])=>{
   const b=document.createElement('button');
   b.className='shape';
@@ -728,11 +775,15 @@ Object.entries(SHAPES).forEach(([key,s])=>{
     document.querySelectorAll('.shape').forEach((x,i)=>{
       x.setAttribute('aria-pressed', Object.keys(SHAPES)[i]===key);
     });
+    updateShapeToggle();
+    setShapesOpen(false);
     buildFields();
     calc();
   });
   shapesBox.appendChild(b);
 });
+
+updateShapeToggle();
 
 /* ---- ölçü alanlarını çiz ---- */
 function buildFields(){
