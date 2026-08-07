@@ -406,35 +406,40 @@
   .hole-row input.holeField{flex:1 1 84px;width:auto;font-size:12.5px;padding:9px 10px}
   .hole-del{flex:none}
   .add-hole-btn{
-    width:100%;
-    background:var(--paper);
-    border:1px dashed var(--line);
-    padding:11px;
+    display:inline-flex;
+    align-items:center;
+    width:auto;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.16);
+    border-radius:14px;
+    padding:9px 16px;
     font-family:var(--mono);
     font-size:12px;
     letter-spacing:.08em;
     text-transform:uppercase;
     cursor:pointer;
     color:var(--mute);
-    transition:background .12s,color .12s,border-color .12s;
+    transition:background .12s,color .12s;
   }
-  .add-hole-btn:hover{background:var(--yellow);color:#1a1e21;border-color:#1a1e21;border-style:solid}
+  .add-hole-btn:hover{background:rgba(255,255,255,0.12)}
 
   .reset-btn{
-    width:100%;
-    background:var(--paper);
-    border:1px solid var(--line);
-    padding:12px;
+    display:block;
+    width:fit-content;
+    margin-left:auto;
+    margin-top:16px;
+    background:none;
+    border:none;
+    padding:6px 2px;
     font-family:var(--mono);
-    font-size:12px;
+    font-size:11px;
     letter-spacing:.08em;
     text-transform:uppercase;
     cursor:pointer;
-    color:#b3261e;
-    margin-top:16px;
-    transition:background .12s,color .12s,border-color .12s;
+    color:rgba(255,255,255,0.4);
+    transition:color .12s;
   }
-  .reset-btn:hover{background:#b3261e;color:#fff;border-color:#b3261e}
+  .reset-btn:hover{color:#e24b4a}
 
   footer{
     margin-top:26px;
