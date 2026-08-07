@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Metal Ağırlık Hesabı</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16181a;
+    --steel:#2a2f35;
+    --zinc:#dfe2dd;
+    --paper:#f4f5f2;
+    --line:#c2c6bf;
+    --line-soft:#d8dbd5;
+    --mute:#6d736c;
+    --yellow:#f2c300;
+    --yellow-deep:#a88600;
+    --display:'Archivo',system-ui,sans-serif;
+    --body:'Barlow',system-ui,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+
+  body{
+    background:var(--zinc);
+    color:var(--ink);
+    font-family:var(--body);
+    font-size:16px;
+    line-height:1.5;
+    padding:24px 20px 64px;
+    background-image:linear-gradient(var(--line-soft) 1px,transparent 1px),
+                     linear-gradient(90deg,var(--line-soft) 1px,transparent 1px);
+    background-size:22px 22px;
+  }
+
+  .shell{max-width:1040px;margin:0 auto}
+
+  /* ---- başlık ---- */
+  header{
+    border-bottom:2px solid var(--ink);
+    padding-bottom:14px;
+    margin-bottom:26px;
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--mute);
+    display:block;
+    margin-bottom:2px;
+  }
+  h1{
+    font-family:var(--display);
+    font-weight:800;
+    font-size:clamp(28px,5vw,40px);
+    letter-spacing:-.02em;
+    line-height:1;
+  }
+  .tagline{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--mute);
+    padding-bottom:3px;
+  }
+
+  /* ---- yerleşim ---- */
+  .wrap{display:grid;grid-template-columns:1fr 360px;gap:26px;align-items:start}
+
+  .panel{
+    background:var(--paper);
+    border:1px solid var(--line);
+    padding:20px;
+  }
+  .panel + .panel{margin-top:18px}
+
+  .panel-title{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:var(--mute);
+    margin-bottom:14px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .panel-title::after{content:"";flex:1;height:1px;background:var(--line-soft)}
+
+  /* ---- malzeme ---- */
+  select,input{
+    font-family:var(--mono);
+    font-size:15px;
+    color:var(--ink);
+    background:#fff;
+    border:1px solid var(--line);
+    padding:11px 12px;
+    width:100%;
+    border-radius:0;
+    appearance:none;
+  }
+  select{
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%2316181a' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 12px center;
+    padding-right:34px;
+  }
+  input:focus,select:focus,button:focus-visible{
+    outline:3px solid var(--yellow);
+    outline-offset:-1px;
+  }
+  input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  input[type=number]{-moz-appearance:textfield}
+
+  .density-note{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--mute);
+    margin-top:9px;
+  }
+  .density-note b{color:var(--ink);font-weight:600}
+
+  /* ---- şekil seçimi ---- */
+  .shapes{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+  .shape{
+    background:#fff;
+    border:1px solid var(--line);
+    padding:9px 4px 7px;
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:5px;
+    font-family:var(--mono);
+    font-size:10px;
+    letter-spacing:.02em;
+    color:var(--mute);
+    text-align:center;
+    line-height:1.25;
+    transition:background .12s,border-color .12s,color .12s;
+  }
+  .shape svg{stroke:var(--mute);fill:none;stroke-width:1.4}
+  .shape:hover{border-color:var(--ink);color:var(--ink)}
+  .shape:hover svg{stroke:var(--ink)}
+  .shape[aria-pressed="true"]{
+    background:var(--ink);
+    border-color:var(--ink);
+    color:#fff;
+  }
+  .shape[aria-pressed="true"] svg{stroke:var(--yellow)}
+
+  /* ---- ölçü çizimi ---- */
+  .diagram{
+    background:#fff;
+    border:1px solid var(--line-soft);
+    margin-bottom:16px;
+    padding:6px;
+  }
+  .diagram svg{display:block;width:100%;height:auto}
+  .diagram .ln{stroke:var(--ink);fill:none;stroke-width:1.6;stroke-linejoin:round}
+  .diagram .dim{stroke:var(--yellow-deep);fill:none;stroke-width:1}
+  .diagram .lbl{font-family:var(--mono);font-size:11px;fill:var(--yellow-deep);font-weight:600}
+  .diagram .face{fill:#f0f1ee}
+
+  /* ---- ölçü alanları ---- */
+  .fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .field label{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--mute);
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-bottom:5px;
+  }
+  .mark{
+    background:var(--yellow);
+    color:var(--ink);
+    font-weight:600;
+    width:16px;height:16px;
+    display:inline-flex;
+    align-items:center;justify-content:center;
+    font-size:10px;
+    letter-spacing:0;
+    flex:none;
+  }
+  .unit{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--mute);
+    margin-left:auto;
+    letter-spacing:0;
+    text-transform:none;
+  }
+
+  /* ---- sonuç ---- */
+  .result{position:sticky;top:24px}
+  .readout{
+    background:var(--ink);
+    color:#fff;
+    padding:20px;
+    border:1px solid var(--ink);
+  }
+  .readout .cap{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:#8b918a;
+    margin-bottom:10px;
+  }
+  .big{
+    font-family:var(--mono);
+    font-weight:600;
+    font-size:clamp(38px,8vw,52px);
+    line-height:.95;
+    color:var(--yellow);
+    letter-spacing:-.03em;
+    word-break:break-all;
+  }
+  .big.flash{animation:flash .28s ease-out}
+  @keyframes flash{from{color:#fff}to{color:var(--yellow)}}
+  .big .u{font-size:20px;color:#fff;margin-left:6px;letter-spacing:0}
+  .sub{
+    font-family:var(--mono);
+    font-size:12px;
+    color:#9aa098;
+    margin-top:12px;
+    padding-top:12px;
+    border-top:1px solid #33383d;
+  }
+  .rows{border:1px solid var(--line);border-top:none;background:var(--paper)}
+  .row{
+    display:flex;justify-content:space-between;gap:12px;
+    padding:10px 14px;
+    font-family:var(--mono);
+    font-size:12.5px;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .row:last-child{border-bottom:none}
+  .row span:first-child{color:var(--mute)}
+  .row span:last-child{font-weight:500;text-align:right}
+  .formula{
+    padding:11px 14px;
+    font-family:var(--mono);
+    font-size:11.5px;
+    color:var(--mute);
+    background:#eaece7;
+    border-bottom:1px solid var(--line-soft);
+    word-break:break-word;
+    line-height:1.6;
+  }
+  .copy{
+    width:100%;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-top:none;
+    padding:12px;
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    cursor:pointer;
+    color:var(--ink);
+    transition:background .12s;
+  }
+  .copy:hover{background:var(--yellow)}
+
+  /* ---- parça listesi ---- */
+  #listPanel{margin-top:26px}
+  .listItem{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
+    padding:12px 14px;
+    border-bottom:1px solid var(--line-soft);
+    font-family:var(--mono);
+    font-size:12.5px;
+  }
+  .listItem:last-child{border-bottom:none}
+  .li-title{font-weight:600;color:var(--ink)}
+  .li-dims{color:var(--mute);margin-top:3px;font-size:11.5px}
+  .li-calc{text-align:right;white-space:nowrap;flex:none}
+  .li-calc span{color:var(--mute);display:block;font-size:11px;margin-bottom:2px}
+  .li-calc b{font-weight:600;font-size:13px}
+  .li-del{
+    background:none;
+    border:1px solid var(--line);
+    width:26px;height:26px;
+    font-family:var(--mono);
+    font-size:15px;
+    line-height:1;
+    color:var(--mute);
+    cursor:pointer;
+    flex:none;
+    padding:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:background .12s,color .12s,border-color .12s;
+  }
+  .li-del:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .row-total{font-weight:700;border-top:2px solid var(--ink)}
+  .row-total span:last-child{color:var(--ink)}
+
+  /* ---- boşluklar ---- */
+  .holes-wrap{margin-top:18px;padding-top:16px;border-top:1px solid var(--line-soft)}
+  .holes-label{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--mute);
+    margin-bottom:10px;
+    display:block;
+  }
+  .hole-row{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:8px;
+    background:#fff;
+    border:1px solid var(--line);
+    padding:8px;
+    margin-bottom:8px;
+  }
+  .hole-row select.holeField{flex:1 1 150px;width:auto;font-size:12.5px;padding:9px 30px 9px 10px}
+  .hole-row input.holeField{flex:1 1 84px;width:auto;font-size:12.5px;padding:9px 10px}
+  .hole-del{flex:none}
+  .add-hole-btn{
+    width:100%;
+    background:var(--paper);
+    border:1px dashed var(--line);
+    padding:11px;
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    cursor:pointer;
+    color:var(--mute);
+    transition:background .12s,color .12s,border-color .12s;
+  }
+  .add-hole-btn:hover{background:var(--yellow);color:var(--ink);border-color:var(--ink);border-style:solid}
+
+  footer{
+    margin-top:26px;
+    font-family:var(--mono);
+    font-size:11.5px;
+    color:var(--mute);
+    line-height:1.7;
+    border-top:1px solid var(--line);
+    padding-top:12px;
+  }
+
+  @media (max-width:860px){
+    .wrap{grid-template-columns:1fr}
+    .result{order:-1;position:sticky;top:0;z-index:5}
+    .shapes{grid-template-columns:repeat(3,1fr)}
+  }
+  @media (max-width:420px){
+    .fields{grid-template-columns:1fr}
+    .listItem{flex-wrap:wrap}
+    .li-calc{text-align:left;margin-top:2px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header>
+    <div>
+      <span class="eyebrow">Atölye hesabı</span>
+      <h1>Metal Ağırlık</h1>
+    </div>
+    <div class="tagline">ölçüyü gir &rarr; kilosunu gör</div>
+  </header>
+
+  <div class="wrap">
+
+    <!-- SOL: GİRİŞ -->
+    <div>
+      <div class="panel">
+        <div class="panel-title">Malzeme</div>
+        <select id="material" aria-label="Malzeme seçimi"></select>
+        <div class="density-note">Yoğunluk: <b id="densityText">7,85</b> g/cm³</div>
+        <div id="customWrap" style="display:none;margin-top:12px">
+          <label for="customDensity" style="font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);display:block;margin-bottom:5px">Kendi yoğunluğun (g/cm³)</label>
+          <input type="number" id="customDensity" value="7.85" step="0.01" min="0.1">
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Parça biçimi</div>
+        <div class="shapes" id="shapes"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title" id="shapeTitle">Ölçüler</div>
+        <div class="diagram" id="diagram"></div>
+        <div class="fields" id="fields"></div>
+        <div class="holes-wrap" id="holesSection" style="display:none">
+          <span class="holes-label">Boşluklar</span>
+          <div id="holesList"></div>
+          <button class="add-hole-btn" id="addHoleBtn" type="button">+ Boşluk ekle</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SAĞ: SONUÇ -->
+    <div class="result">
+      <div class="readout">
+        <div class="cap">Toplam ağırlık</div>
+        <div class="big" id="total">—</div>
+        <div class="sub" id="perPiece">Ölçüleri girmeni bekliyorum.</div>
+      </div>
+      <div class="formula" id="formula">—</div>
+      <div class="rows">
+        <div class="row"><span>Birim ağırlık</span><span id="unitW">—</span></div>
+        <div class="row"><span>Hacim (birim)</span><span id="volume">—</span></div>
+        <div class="row" id="extraRow" style="display:none"><span id="extraLabel">—</span><span id="extraVal">—</span></div>
+        <div class="row" id="grossRow" style="display:none"><span>Boşluksuz ağırlık</span><span id="grossVal">—</span></div>
+        <div class="row" id="deductedRow" style="display:none"><span>Düşülen ağırlık</span><span id="deductedVal">—</span></div>
+      </div>
+      <button class="copy" id="copyBtn">Sonucu kopyala</button>
+      <button class="copy" id="addBtn">Listeye ekle</button>
+    </div>
+
+  </div>
+
+  <div class="panel" id="listPanel">
+    <div class="panel-title">Parça listesi</div>
+    <div class="density-note" id="listEmpty">Henüz parça eklenmedi.</div>
+    <div class="rows" id="listRows" style="display:none"></div>
+    <div class="rows" id="subtotalRows" style="display:none;margin-top:16px"></div>
+  </div>
+
+  <footer>
+    Hesap, malzemenin nominal yoğunluğuna göre yapılır. Gerçek parçada haddeleme toleransı, döküm et kalınlığı farkı ve alaşım değişkenliği nedeniyle genelde %2–5 sapma olur.
+  </footer>
+</div>
+
+<script>
+/* ============ 1) MALZEMELER (g/cm³) ============ */
+const MATERIALS = [
+  {id:'st37',  name:'Çelik (St37 / DKP)',    d:7.85},
+  {id:'ss304', name:'Paslanmaz 304',          d:7.90},
+  {id:'ss316', name:'Paslanmaz 316',          d:8.00},
+  {id:'alu',   name:'Alüminyum',              d:2.70},
+  {id:'cu',    name:'Bakır',                  d:8.96},
+  {id:'brass', name:'Pirinç',                 d:8.50},
+  {id:'bronze',name:'Bronz',                  d:8.80},
+  {id:'grey',  name:'Gri döküm (pik)',        d:7.20},
+  {id:'sfero', name:'Sfero döküm (GGG)',      d:7.10},
+  {id:'zn',    name:'Çinko',                  d:7.14},
+  {id:'pb',    name:'Kurşun',                 d:11.34},
+  {id:'ti',    name:'Titanyum',               d:4.51},
+  {id:'mg',    name:'Magnezyum',              d:1.74},
+  {id:'custom',name:'Özel (yoğunluğu ben gireyim)', d:7.85}
+];
+
+/* ============ 2) BİÇİMLER ============
+   vol() → mm³ döndürür. Her biçimin kendi ölçü alanları ve çizimi var. */
+const PI = Math.PI;
+
+const SHAPES = {
+  plaka:{
+    name:'Sac / Plaka / Lama',
+    icon:'<rect x="2" y="6" width="20" height="12"/>',
+    dims:[
+      {k:'a',m:'A',label:'En',v:1000},
+      {k:'b',m:'B',label:'Boy',v:2000},
+      {k:'t',m:'T',label:'Kalınlık',v:3}
+    ],
+    vol:d=>d.a*d.b*d.t,
+    formula:d=>`${n(d.a)} × ${n(d.b)} × ${n(d.t)} mm`,
+    extra:d=>({label:'Yüzey alanı',val:fmt(d.a*d.b/1e6,3)+' m²'}),
+    svg:`<path class="face" d="M30 30 L150 30 L150 82 L30 82Z"/>
+         <path class="ln" d="M30 30 L150 30 L150 82 L30 82Z"/>
+         <path class="ln" d="M150 30 L168 20 L168 72 L150 82"/>
+         <path class="ln" d="M30 30 L48 20 L168 20"/>
+         <path class="dim" d="M30 94 H150 M30 90v8 M150 90v8"/>
+         <text class="lbl" x="86" y="107" text-anchor="middle">A</text>
+         <path class="dim" d="M18 30 V82 M14 30h8 M14 82h8"/>
+         <text class="lbl" x="6" y="60">B</text>
+         <path class="dim" d="M176 20 V72 M172 20h8 M172 72h8"/>
+         <text class="lbl" x="182" y="48">T</text>`
+  },
+  daire:{
+    name:'Daire sac (disk)',
+    icon:'<circle cx="12" cy="12" r="9"/>',
+    dims:[
+      {k:'d',m:'Ø',label:'Çap',v:200},
+      {k:'t',m:'T',label:'Kalınlık',v:10}
+    ],
+    vol:d=>PI/4*d.d*d.d*d.t,
+    formula:d=>`π/4 × ${n(d.d)}² × ${n(d.t)} mm`,
+    extra:null,
+    svg:`<circle class="face" cx="80" cy="56" r="38"/>
+         <circle class="ln" cx="80" cy="56" r="38"/>
+         <path class="dim" d="M42 56 H118 M42 52v8 M118 52v8"/>
+         <text class="lbl" x="80" y="50" text-anchor="middle">Ø</text>
+         <rect class="face" x="146" y="18" width="14" height="76"/>
+         <rect class="ln" x="146" y="18" width="14" height="76"/>
+         <path class="dim" d="M146 106 H160 M146 102v8 M160 102v8"/>
+         <text class="lbl" x="153" y="120" text-anchor="middle">T</text>`
+  },
+  mil:{
+    name:'Yuvarlak mil',
+    icon:'<rect x="2" y="8" width="20" height="8" rx="4"/>',
+    dims:[
+      {k:'d',m:'Ø',label:'Çap',v:40},
+      {k:'l',m:'L',label:'Uzunluk',v:1000}
+    ],
+    vol:d=>PI/4*d.d*d.d*d.l,
+    formula:d=>`π/4 × ${n(d.d)}² × ${n(d.l)} mm`,
+    extra:d=>({label:'Metre ağırlığı',val:'—'}),
+    svg:`<path class="face" d="M40 32 H150 V80 H40Z"/>
+         <path class="ln" d="M40 32 H150 M40 80 H150"/>
+         <ellipse class="face" cx="150" cy="56" rx="11" ry="24"/>
+         <ellipse class="ln" cx="150" cy="56" rx="11" ry="24"/>
+         <path class="ln" d="M40 32 a11 24 0 0 0 0 48"/>
+         <path class="dim" d="M26 32 V80 M22 32h8 M22 80h8"/>
+         <text class="lbl" x="8" y="60">Ø</text>
+         <path class="dim" d="M40 94 H150 M40 90v8 M150 90v8"/>
+         <text class="lbl" x="95" y="107" text-anchor="middle">L</text>`
+  },
+  boru:{
+    name:'Boru',
+    icon:'<rect x="2" y="7" width="20" height="10" rx="5"/><ellipse cx="20" cy="12" rx="2.5" ry="4"/>',
+    dims:[
+      {k:'d',m:'Ø',label:'Dış çap',v:60},
+      {k:'t',m:'T',label:'Et kalınlığı',v:3},
+      {k:'l',m:'L',label:'Uzunluk',v:1000}
+    ],
+    vol:d=>{const i=Math.max(d.d-2*d.t,0);return PI/4*(d.d*d.d-i*i)*d.l},
+    formula:d=>`π/4 × (${n(d.d)}² − ${n(Math.max(d.d-2*d.t,0))}²) × ${n(d.l)} mm`,
+    extra:d=>({label:'Metre ağırlığı',val:'—'}),
+    svg:`<path class="face" d="M40 32 H150 V80 H40Z"/>
+         <path class="ln" d="M40 32 H150 M40 80 H150"/>
+         <ellipse class="face" cx="150" cy="56" rx="11" ry="24"/>
+         <ellipse class="ln" cx="150" cy="56" rx="11" ry="24"/>
+         <ellipse class="ln" cx="150" cy="56" rx="6" ry="15"/>
+         <path class="ln" d="M40 32 a11 24 0 0 0 0 48"/>
+         <path class="dim" d="M26 32 V80 M22 32h8 M22 80h8"/>
+         <text class="lbl" x="8" y="60">Ø</text>
+         <path class="dim" d="M168 32 V41 M164 32h8 M164 41h8"/>
+         <text class="lbl" x="176" y="40">T</text>
+         <path class="dim" d="M40 94 H150 M40 90v8 M150 90v8"/>
+         <text class="lbl" x="95" y="107" text-anchor="middle">L</text>`
+  },
+  kare:{
+    name:'Kare mil',
+    icon:'<rect x="4" y="4" width="16" height="16"/>',
+    dims:[
+      {k:'a',m:'A',label:'Kenar',v:30},
+      {k:'l',m:'L',label:'Uzunluk',v:1000}
+    ],
+    vol:d=>d.a*d.a*d.l,
+    formula:d=>`${n(d.a)}² × ${n(d.l)} mm`,
+    extra:d=>({label:'Metre ağırlığı',val:'—'}),
+    svg:`<path class="face" d="M40 36 H140 V84 H40Z"/>
+         <path class="ln" d="M40 36 H140 V84 H40Z"/>
+         <path class="ln" d="M140 36 L162 22 L162 70 L140 84"/>
+         <path class="ln" d="M40 36 L62 22 L162 22"/>
+         <path class="dim" d="M26 36 V84 M22 36h8 M22 84h8"/>
+         <text class="lbl" x="10" y="64">A</text>
+         <path class="dim" d="M40 96 H140 M40 92v8 M140 92v8"/>
+         <text class="lbl" x="90" y="109" text-anchor="middle">L</text>`
+  },
+  altigen:{
+    name:'Altıgen mil',
+    icon:'<path d="M7 4h10l5 8-5 8H7l-5-8z"/>',
+    dims:[
+      {k:'s',m:'S',label:'Anahtar ağzı',v:24},
+      {k:'l',m:'L',label:'Uzunluk',v:1000}
+    ],
+    vol:d=>0.8660254*d.s*d.s*d.l,
+    formula:d=>`0,866 × ${n(d.s)}² × ${n(d.l)} mm`,
+    extra:d=>({label:'Metre ağırlığı',val:'—'}),
+    svg:`<path class="face" d="M60 22 L100 22 L120 56 L100 90 L60 90 L40 56Z"/>
+         <path class="ln" d="M60 22 L100 22 L120 56 L100 90 L60 90 L40 56Z"/>
+         <path class="dim" d="M40 56 H120 M40 52v8 M120 52v8"/>
+         <text class="lbl" x="80" y="50" text-anchor="middle">S</text>
+         <path class="ln" d="M120 56 L160 56"/>
+         <path class="dim" d="M120 100 H160 M120 96v8 M160 96v8"/>
+         <text class="lbl" x="140" y="113" text-anchor="middle">L</text>`
+  },
+  kutu:{
+    name:'Kutu profil',
+    icon:'<rect x="2" y="6" width="20" height="12"/><rect x="5" y="9" width="14" height="6"/>',
+    dims:[
+      {k:'a',m:'A',label:'Kısa kenar',v:40},
+      {k:'b',m:'B',label:'Uzun kenar',v:60},
+      {k:'t',m:'T',label:'Et kalınlığı',v:2},
+      {k:'l',m:'L',label:'Uzunluk',v:6000}
+    ],
+    vol:d=>{
+      const ia=Math.max(d.a-2*d.t,0), ib=Math.max(d.b-2*d.t,0);
+      return (d.a*d.b-ia*ib)*d.l;
+    },
+    formula:d=>`(${n(d.a)}×${n(d.b)} − ${n(Math.max(d.a-2*d.t,0))}×${n(Math.max(d.b-2*d.t,0))}) × ${n(d.l)} mm`,
+    extra:d=>({label:'Metre ağırlığı',val:'—'}),
+    svg:`<path class="face" d="M40 26 H130 V86 H40Z"/>
+         <path class="ln" d="M40 26 H130 V86 H40Z"/>
+         <path class="ln" d="M48 34 H122 V78 H48Z"/>
+         <path class="dim" d="M26 26 V86 M22 26h8 M22 86h8"/>
+         <text class="lbl" x="10" y="60">B</text>
+         <path class="dim" d="M40 98 H130 M40 94v8 M130 94v8"/>
+         <text class="lbl" x="85" y="111" text-anchor="middle">A</text>
+         <path class="dim" d="M138 26 V34 M134 26h8 M134 34h8"/>
+         <text class="lbl" x="146" y="34">T</text>
+         <path class="ln" d="M130 26 L160 26 M130 86 L160 86"/>
+         <text class="lbl" x="150" y="60" text-anchor="middle">L</text>`
+  },
+  kosebent:{
+    name:'Köşebent (L)',
+    icon:'<path d="M4 3v18h16v-4H8V3z"/>',
+    dims:[
+      {k:'a',m:'A',label:'1. kenar',v:40},
+      {k:'b',m:'B',label:'2. kenar',v:40},
+      {k:'t',m:'T',label:'Et kalınlığı',v:4},
+      {k:'l',m:'L',label:'Uzunluk',v:6000}
+    ],
+    vol:d=>(d.a+d.b-d.t)*d.t*d.l,
+    formula:d=>`(${n(d.a)} + ${n(d.b)} − ${n(d.t)}) × ${n(d.t)} × ${n(d.l)} mm`,
+    extra:d=>({label:'Metre ağırlığı',val:'—'}),
+    svg:`<path class="face" d="M42 20 V86 H126 V70 H58 V20Z"/>
+         <path class="ln" d="M42 20 V86 H126 V70 H58 V20Z"/>
+         <path class="dim" d="M28 20 V86 M24 20h8 M24 86h8"/>
+         <text class="lbl" x="12" y="56">A</text>
+         <path class="dim" d="M42 98 H126 M42 94v8 M126 94v8"/>
+         <text class="lbl" x="84" y="111" text-anchor="middle">B</text>
+         <path class="dim" d="M42 12 H58 M42 8v8 M58 8v8"/>
+         <text class="lbl" x="66" y="16">T</text>
+         <path class="ln" d="M126 70 L158 70 M126 86 L158 86"/>
+         <text class="lbl" x="146" y="60" text-anchor="middle">L</text>`
+  },
+  hacim:{
+    name:'Döküm / serbest hacim',
+    icon:'<path d="M4 9l8-6 8 6-8 6z"/><path d="M4 9v7l8 5 8-5V9"/>',
+    dims:[
+      {k:'v',m:'V',label:'Hacim',v:500,unit:'cm³'}
+    ],
+    vol:d=>d.v*1000,
+    formula:d=>`${n(d.v)} cm³`,
+    extra:null,
+    svg:`<path class="face" d="M62 26 C40 34 34 62 50 76 C64 88 108 92 128 76 C148 60 136 34 114 26 C96 19 78 20 62 26Z"/>
+         <path class="ln" d="M62 26 C40 34 34 62 50 76 C64 88 108 92 128 76 C148 60 136 34 114 26 C96 19 78 20 62 26Z"/>
+         <text class="lbl" x="89" y="60" text-anchor="middle">V (cm³)</text>`
+  }
+};
+
+/* ============ 3) YARDIMCILAR ============ */
+function fmt(x,dec){
+  return new Intl.NumberFormat('tr-TR',{minimumFractionDigits:dec,maximumFractionDigits:dec}).format(x);
+}
+function n(x){
+  if(x===undefined||isNaN(x))return '?';
+  return new Intl.NumberFormat('tr-TR',{maximumFractionDigits:2}).format(x);
+}
+function smart(kg){
+  if(kg>=1000) return fmt(kg,1);
+  if(kg>=10)   return fmt(kg,2);
+  if(kg>=1)    return fmt(kg,3);
+  return fmt(kg,4);
+}
+
+/* ============ 4) DURUM ============ */
+let currentShape='plaka';
+let values={};
+let qty=1;
+let holes=[]; // {id, type:'round'|'rect', d, w, h, count}
+
+function shapeSupportsHoles(shapeKey){
+  return shapeKey==='plaka' || shapeKey==='daire';
+}
+
+/* ---- malzeme listesini doldur ---- */
+const matSel=document.getElementById('material');
+MATERIALS.forEach(m=>{
+  const o=document.createElement('option');
+  o.value=m.id; o.textContent=m.name;
+  matSel.appendChild(o);
+});
+
+/* ---- biçim butonlarını kur ---- */
+const shapesBox=document.getElementById('shapes');
+Object.entries(SHAPES).forEach(([key,s])=>{
+  const b=document.createElement('button');
+  b.className='shape';
+  b.type='button';
+  b.setAttribute('aria-pressed',key===currentShape);
+  b.innerHTML=`<svg viewBox="0 0 24 24" width="24" height="24">${s.icon}</svg><span>${s.name}</span>`;
+  b.addEventListener('click',()=>{
+    currentShape=key;
+    document.querySelectorAll('.shape').forEach((x,i)=>{
+      x.setAttribute('aria-pressed', Object.keys(SHAPES)[i]===key);
+    });
+    buildFields();
+    calc();
+  });
+  shapesBox.appendChild(b);
+});
+
+/* ---- ölçü alanlarını çiz ---- */
+function buildFields(){
+  const s=SHAPES[currentShape];
+  document.getElementById('shapeTitle').textContent='Ölçüler — '+s.name;
+  document.getElementById('diagram').innerHTML=
+    `<svg viewBox="0 0 200 125" role="img" aria-label="${s.name} ölçü şeması">${s.svg}</svg>`;
+
+  const box=document.getElementById('fields');
+  box.innerHTML='';
+  values={};
+
+  s.dims.forEach(dim=>{
+    values[dim.k]=dim.v;
+    const wrap=document.createElement('div');
+    wrap.className='field';
+    wrap.innerHTML=`
+      <label for="f_${dim.k}">
+        <span class="mark">${dim.m}</span>${dim.label}
+        <span class="unit">${dim.unit||'mm'}</span>
+      </label>
+      <input type="number" id="f_${dim.k}" value="${dim.v}" min="0" step="any" inputmode="decimal">`;
+    box.appendChild(wrap);
+    wrap.querySelector('input').addEventListener('input',e=>{
+      values[dim.k]=parseFloat(e.target.value);
+      calc();
+    });
+  });
+
+  // adet alanı her biçimde var
+  const q=document.createElement('div');
+  q.className='field';
+  q.innerHTML=`
+    <label for="f_qty"><span class="mark">#</span>Adet <span class="unit">parça</span></label>
+    <input type="number" id="f_qty" value="${qty}" min="1" step="1" inputmode="numeric">`;
+  box.appendChild(q);
+  q.querySelector('input').addEventListener('input',e=>{
+    qty=parseInt(e.target.value)||0;
+    calc();
+  });
+
+  // boşluklar sadece sac/plaka/lama ve daire sac biçimlerinde
+  holes=[];
+  document.getElementById('holesSection').style.display =
+    shapeSupportsHoles(currentShape) ? 'block' : 'none';
+  renderHoles();
+}
+
+/* ============ boşluklar (delik / kesik) ============ */
+function holeVolumeMM3(h,thickness){
+  if(!(thickness>0) || !(h.count>0)) return 0;
+  if(h.type==='round'){
+    if(!(h.d>0)) return 0;
+    return PI/4*h.d*h.d*thickness*h.count;
+  }
+  if(!(h.w>0) || !(h.h>0)) return 0;
+  return h.w*h.h*thickness*h.count;
+}
+function totalHolesVolumeMM3(thickness){
+  return holes.reduce((sum,h)=>sum+holeVolumeMM3(h,thickness),0);
+}
+
+function renderHoles(){
+  const list=document.getElementById('holesList');
+  if(!list) return;
+
+  list.innerHTML = holes.map(h=>`
+    <div class="hole-row" data-id="${h.id}">
+      <select class="holeField" data-id="${h.id}" data-field="type" aria-label="Boşluk türü">
+        <option value="round" ${h.type==='round'?'selected':''}>Yuvarlak delik</option>
+        <option value="rect" ${h.type==='rect'?'selected':''}>Dikdörtgen kesik</option>
+      </select>
+      ${h.type==='round'
+        ? `<input type="number" class="holeField" data-id="${h.id}" data-field="d" value="${h.d}" min="0" step="any" inputmode="decimal" aria-label="Çap (mm)" placeholder="Çap mm">`
+        : `<input type="number" class="holeField" data-id="${h.id}" data-field="w" value="${h.w}" min="0" step="any" inputmode="decimal" aria-label="En (mm)" placeholder="En mm">
+           <input type="number" class="holeField" data-id="${h.id}" data-field="h" value="${h.h}" min="0" step="any" inputmode="decimal" aria-label="Boy (mm)" placeholder="Boy mm">`}
+      <input type="number" class="holeField" data-id="${h.id}" data-field="count" value="${h.count}" min="1" step="1" inputmode="numeric" aria-label="Adet" placeholder="Adet">
+      <button class="li-del hole-del" type="button" data-id="${h.id}" aria-label="Boşluğu sil">×</button>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('.holeField').forEach(el=>{
+    el.addEventListener(el.tagName==='SELECT' ? 'change' : 'input', e=>{
+      const id=e.target.dataset.id, field=e.target.dataset.field;
+      const h=holes.find(x=>String(x.id)===id);
+      if(!h) return;
+      if(field==='type'){
+        h.type=e.target.value;
+        if(h.type==='round'){ h.d = h.d || 10; }
+        else { h.w = h.w || 10; h.h = h.h || 10; }
+        renderHoles();
+        calc();
+        return;
+      }
+      h[field] = field==='count' ? parseInt(e.target.value) : parseFloat(e.target.value);
+      calc();
+    });
+  });
+
+  list.querySelectorAll('.hole-del').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const id=btn.dataset.id;
+      holes=holes.filter(h=>String(h.id)!==id);
+      renderHoles();
+      calc();
+    });
+  });
+}
+
+document.getElementById('addHoleBtn').addEventListener('click',()=>{
+  holes.push({id:Date.now()+'-'+Math.random().toString(36).slice(2), type:'round', d:10, count:1});
+  renderHoles();
+  calc();
+});
+
+/* ---- yoğunluk ---- */
+function density(){
+  const m=MATERIALS.find(x=>x.id===matSel.value);
+  if(m.id==='custom') return parseFloat(document.getElementById('customDensity').value)||0;
+  return m.d;
+}
+matSel.addEventListener('change',()=>{
+  const isCustom=matSel.value==='custom';
+  document.getElementById('customWrap').style.display=isCustom?'block':'none';
+  document.getElementById('densityText').textContent=fmt(density(),2);
+  calc();
+});
+document.getElementById('customDensity').addEventListener('input',()=>{
+  document.getElementById('densityText').textContent=fmt(density(),2);
+  calc();
+});
+
+/* ============ 5) HESAP ============ */
+let lastText='';
+
+function computeCurrent(){
+  const s=SHAPES[currentShape];
+  const d=density();
+  const ok=s.dims.every(x=>values[x.k]>0) && d>0;
+  if(!ok) return {ok:false};
+
+  const mm3 = s.vol(values); // mm³ (boşluksuz)
+  const supportsHoles = shapeSupportsHoles(currentShape);
+  const holesMM3 = supportsHoles ? totalHolesVolumeMM3(values.t) : 0;
+  const netMM3 = Math.max(mm3-holesMM3,0);
+
+  const grossKg = (mm3/1000)*d/1000;   // boşluksuz birim ağırlık
+  const cm3     = netMM3/1000;
+  const kg      = cm3*d/1000;          // net birim ağırlık
+  const deductedKg = grossKg-kg;       // birim başına düşülen ağırlık
+
+  return {ok:true,s,d,mm3,netMM3,cm3,kg,grossKg,deductedKg,holesMM3,supportsHoles};
+}
+
+function calc(){
+  const c=computeCurrent();
+
+  const totalEl=document.getElementById('total');
+  const subEl=document.getElementById('perPiece');
+  const grossRow=document.getElementById('grossRow');
+  const deductedRow=document.getElementById('deductedRow');
+
+  if(!c.ok){
+    totalEl.textContent='—';
+    subEl.textContent='Bütün ölçüleri sıfırdan büyük gir.';
+    document.getElementById('unitW').textContent='—';
+    document.getElementById('volume').textContent='—';
+    document.getElementById('formula').textContent='—';
+    document.getElementById('extraRow').style.display='none';
+    grossRow.style.display='none';
+    deductedRow.style.display='none';
+    return;
+  }
+
+  const {s,d,cm3,kg,grossKg,deductedKg,holesMM3}=c;
+  const total = kg*(qty||0);
+
+  totalEl.innerHTML = smart(total)+'<span class="u">kg</span>';
+  totalEl.classList.remove('flash');
+  void totalEl.offsetWidth;
+  totalEl.classList.add('flash');
+
+  subEl.textContent = `${fmt(qty||0,0)} adet × ${smart(kg)} kg` +
+    (total>=1000 ? `  ·  ${fmt(total/1000,3)} ton` : '');
+
+  document.getElementById('unitW').textContent = smart(kg)+' kg';
+  document.getElementById('volume').textContent =
+    cm3>=1000 ? fmt(cm3/1000,3)+' dm³' : fmt(cm3,2)+' cm³';
+  document.getElementById('formula').textContent =
+    s.formula(values) + '  ×  ' + fmt(d,2) + ' g/cm³';
+
+  // biçime özel ek satır (metre ağırlığı / yüzey alanı)
+  const row=document.getElementById('extraRow');
+  if(s.extra){
+    const ex=s.extra(values);
+    let val=ex.val;
+    if(ex.label==='Metre ağırlığı' && values.l>0){
+      val = smart(kg/(values.l/1000))+' kg/m';
+    }
+    if(val!=='—'){
+      row.style.display='flex';
+      document.getElementById('extraLabel').textContent=ex.label;
+      document.getElementById('extraVal').textContent=val;
+    } else row.style.display='none';
+  } else row.style.display='none';
+
+  // boşluksuz ağırlık / düşülen ağırlık
+  if(holesMM3>0){
+    grossRow.style.display='flex';
+    deductedRow.style.display='flex';
+    document.getElementById('grossVal').textContent = smart(grossKg*(qty||0))+' kg';
+    document.getElementById('deductedVal').textContent = smart(deductedKg*(qty||0))+' kg';
+  } else {
+    grossRow.style.display='none';
+    deductedRow.style.display='none';
+  }
+
+  lastText = `${MATERIALS.find(m=>m.id===matSel.value).name} — ${s.name}\n`+
+             `${s.formula(values)}\n`+
+             (holesMM3>0 ? `Boşluksuz birim: ${smart(grossKg)} kg · Düşülen: ${smart(deductedKg)} kg\n` : '')+
+             `Birim: ${smart(kg)} kg · Adet: ${qty} · Toplam: ${smart(total)} kg`;
+}
+
+/* ---- kopyala ---- */
+document.getElementById('copyBtn').addEventListener('click',async e=>{
+  if(!lastText) return;
+  try{
+    await navigator.clipboard.writeText(lastText);
+    e.target.textContent='Kopyalandı';
+  }catch(err){
+    e.target.textContent='Kopyalanamadı, elle seç';
+  }
+  setTimeout(()=>e.target.textContent='Sonucu kopyala',1600);
+});
+
+/* ============ 6) PARÇA LİSTESİ ============ */
+let partsList=[];
+
+function renderList(){
+  const listEmpty=document.getElementById('listEmpty');
+  const listRows=document.getElementById('listRows');
+  const subtotalRows=document.getElementById('subtotalRows');
+
+  if(partsList.length===0){
+    listEmpty.style.display='block';
+    listRows.style.display='none';
+    listRows.innerHTML='';
+    subtotalRows.style.display='none';
+    subtotalRows.innerHTML='';
+    return;
+  }
+
+  listEmpty.style.display='none';
+  listRows.style.display='block';
+  listRows.innerHTML=partsList.map(p=>`
+    <div class="listItem">
+      <div class="li-main">
+        <div class="li-title">${p.materialName} · ${p.shapeName}</div>
+        <div class="li-dims">${p.dimsText}</div>
+      </div>
+      <div class="li-calc">
+        <span>${fmt(p.qty,0)} adet × ${smart(p.unitKg)} kg</span>
+        <b>${smart(p.totalKg)} kg</b>
+      </div>
+      <button class="li-del" type="button" data-id="${p.id}" aria-label="Satırı sil">×</button>
+    </div>
+  `).join('');
+
+  listRows.querySelectorAll('.li-del').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const id=btn.dataset.id;
+      partsList=partsList.filter(p=>String(p.id)!==id);
+      renderList();
+    });
+  });
+
+  const byMat=new Map();
+  let grand=0;
+  partsList.forEach(p=>{
+    byMat.set(p.materialName,(byMat.get(p.materialName)||0)+p.totalKg);
+    grand+=p.totalKg;
+  });
+
+  let rowsHtml='';
+  byMat.forEach((kg,name)=>{
+    rowsHtml+=`<div class="row"><span>${name}</span><span>${smart(kg)} kg</span></div>`;
+  });
+  rowsHtml+=`<div class="row row-total"><span>Genel toplam</span><span>${smart(grand)} kg</span></div>`;
+
+  subtotalRows.style.display='block';
+  subtotalRows.innerHTML=rowsHtml;
+}
+
+document.getElementById('addBtn').addEventListener('click',e=>{
+  const c=computeCurrent();
+  const ok=c.ok && qty>0;
+
+  if(!ok){
+    e.target.textContent='Ölçüleri gir';
+    setTimeout(()=>e.target.textContent='Listeye ekle',1600);
+    return;
+  }
+
+  const {s,d,kg,holesMM3}=c;
+  const total=kg*qty;
+  const mat=MATERIALS.find(m=>m.id===matSel.value);
+
+  partsList.push({
+    id:Date.now()+'-'+Math.random().toString(36).slice(2),
+    materialName:mat.id==='custom' ? `Özel (${fmt(d,2)} g/cm³)` : mat.name,
+    shapeName:s.name,
+    dimsText:s.formula(values) + (holesMM3>0 ? ` · ${holes.length} boşluk düşülmüş` : ''),
+    qty,
+    unitKg:kg,
+    totalKg:total
+  });
+  renderList();
+
+  e.target.textContent='Eklendi';
+  setTimeout(()=>e.target.textContent='Listeye ekle',1200);
+});
+
+/* ---- başlat ---- */
+buildFields();
+calc();
+renderList();
+</script>
+</body>
+</html>
