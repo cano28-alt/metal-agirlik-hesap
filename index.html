@@ -469,22 +469,75 @@
     padding-top:12px;
   }
 
+  /* ---- mobil alt şerit ---- */
+  .mobile-bar{display:none}
+  .mobile-bar-total{display:flex;flex-direction:column;justify-content:center;gap:2px;min-width:0}
+  .mobile-bar-label{
+    font-family:var(--mono);
+    font-size:10px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--mute);
+  }
+  .mobile-bar-value{
+    font-family:var(--mono);
+    font-size:22px;
+    font-weight:600;
+    color:#f2c300;
+    line-height:1.1;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .mobile-bar-add{
+    flex:none;
+    min-height:44px;
+    min-width:96px;
+    background:#f2c300;
+    color:#15181b;
+    border:none;
+    border-radius:14px;
+    padding:0 20px;
+    font-family:var(--mono);
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:opacity .12s;
+  }
+  .mobile-bar-add.disabled{opacity:.45;cursor:default}
+
   @media (max-width:860px){
     .wrap{grid-template-columns:1fr}
     .result{order:-1;position:static}
     .result-card{display:contents}
     .readout{
-      position:sticky;
-      top:0;
-      z-index:6;
-      max-height:25vh;
-      overflow:auto;
       border-bottom:1px solid rgba(255,255,255,0.12);
       border-radius:20px 20px 0 0;
     }
     .result-card .formula{border-radius:0}
     .result-card .rows{border-radius:0 0 20px 20px;overflow:hidden}
     .shapes{grid-template-columns:repeat(3,1fr)}
+    #addBtn{display:none}
+    body{padding-bottom:88px}
+    .mobile-bar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      position:fixed;
+      left:0;
+      bottom:0;
+      width:100%;
+      height:64px;
+      padding:0 16px;
+      background:rgba(20,24,27,0.92);
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+      border-top:1px solid rgba(255,255,255,0.12);
+      z-index:20;
+    }
   }
   @media (max-width:700px){
     .panel{
@@ -493,7 +546,7 @@
     }
   }
   @media (max-width:480px){
-    body{padding:16px 14px 48px}
+    body{padding:16px 14px;padding-bottom:88px}
     .panel{padding:16px}
     .readout{padding:16px}
     .big{font-size:clamp(30px,10vw,44px)}
@@ -595,6 +648,14 @@
   <footer>
     Hesap, malzemenin nominal yoğunluğuna göre yapılır. Gerçek parçada haddeleme toleransı, döküm et kalınlığı farkı ve alaşım değişkenliği nedeniyle genelde %2–5 sapma olur.
   </footer>
+</div>
+
+<div class="mobile-bar" id="mobileBar">
+  <div class="mobile-bar-total">
+    <span class="mobile-bar-label">Toplam</span>
+    <span class="mobile-bar-value" id="mobileBarValue">—</span>
+  </div>
+  <button class="mobile-bar-add disabled" id="mobileAddBtn" type="button">Ekle</button>
 </div>
 
 <script>
@@ -1053,6 +1114,8 @@ function calc(){
     document.getElementById('extraRow').style.display='none';
     grossRow.style.display='none';
     deductedRow.style.display='none';
+    document.getElementById('mobileBarValue').textContent='—';
+    document.getElementById('mobileAddBtn').classList.add('disabled');
     return;
   }
 
@@ -1063,6 +1126,9 @@ function calc(){
   totalEl.classList.remove('flash');
   void totalEl.offsetWidth;
   totalEl.classList.add('flash');
+
+  document.getElementById('mobileBarValue').textContent = smart(total)+' kg';
+  document.getElementById('mobileAddBtn').classList.remove('disabled');
 
   subEl.textContent = `${fmt(qty||0,0)} adet × ${smart(kg)} kg` +
     (total>=1000 ? `  ·  ${fmt(total/1000,3)} ton` : '');
@@ -1226,6 +1292,10 @@ document.getElementById('addBtn').addEventListener('click',e=>{
 
   e.target.textContent='Eklendi';
   setTimeout(()=>e.target.textContent='Listeye ekle',1200);
+});
+
+document.getElementById('mobileAddBtn').addEventListener('click',()=>{
+  document.getElementById('addBtn').click();
 });
 
 document.getElementById('resetListBtn').addEventListener('click',()=>{
