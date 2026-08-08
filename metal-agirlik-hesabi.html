@@ -132,6 +132,7 @@
     border:1px solid rgba(255,255,255,0.14);
     padding:11px 12px;
     width:100%;
+    min-height:44px;
     border-radius:12px;
     appearance:none;
   }
@@ -163,6 +164,7 @@
   /* ---- şekil seçimi ---- */
   .shape-toggle{
     width:100%;
+    min-height:44px;
     background:rgba(255,255,255,0.06);
     border:1px solid rgba(255,255,255,0.14);
     border-radius:12px;
@@ -326,6 +328,7 @@
   .result-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
   .copy{
     flex:1 1 auto;
+    min-height:44px;
     background:rgba(255,255,255,0.08);
     border:1px solid rgba(255,255,255,0.16);
     border-radius:14px;
@@ -336,6 +339,9 @@
     text-transform:uppercase;
     cursor:pointer;
     color:var(--ink);
+    display:flex;
+    align-items:center;
+    justify-content:center;
     transition:background .12s;
   }
   .copy:hover{background:rgba(255,255,255,0.14)}
@@ -363,10 +369,10 @@
   .li-del{
     background:none;
     border:1px solid var(--line);
-    border-radius:10px;
-    width:26px;height:26px;
+    border-radius:12px;
+    width:44px;height:44px;
     font-family:var(--mono);
-    font-size:15px;
+    font-size:18px;
     line-height:1;
     color:var(--mute);
     cursor:pointer;
@@ -415,7 +421,9 @@
   .add-hole-btn{
     display:inline-flex;
     align-items:center;
+    justify-content:center;
     width:auto;
+    min-height:44px;
     background:rgba(255,255,255,0.06);
     border:1px solid rgba(255,255,255,0.16);
     border-radius:14px;
@@ -431,13 +439,16 @@
   .add-hole-btn:hover{background:rgba(255,255,255,0.12)}
 
   .reset-btn{
-    display:block;
+    display:flex;
+    align-items:center;
+    justify-content:center;
     width:fit-content;
+    min-height:44px;
     margin-left:auto;
     margin-top:16px;
     background:none;
     border:none;
-    padding:6px 2px;
+    padding:6px 14px;
     font-family:var(--mono);
     font-size:11px;
     letter-spacing:.08em;
@@ -460,8 +471,36 @@
 
   @media (max-width:860px){
     .wrap{grid-template-columns:1fr}
-    .result{order:-1;position:sticky;top:0;z-index:5}
+    .result{order:-1;position:static}
+    .result-card{display:contents}
+    .readout{
+      position:sticky;
+      top:0;
+      z-index:6;
+      max-height:25vh;
+      overflow:auto;
+      border-bottom:1px solid rgba(255,255,255,0.12);
+      border-radius:20px 20px 0 0;
+    }
+    .result-card .formula{border-radius:0}
+    .result-card .rows{border-radius:0 0 20px 20px;overflow:hidden}
     .shapes{grid-template-columns:repeat(3,1fr)}
+  }
+  @media (max-width:700px){
+    .panel{
+      backdrop-filter:blur(10px);
+      -webkit-backdrop-filter:blur(10px);
+    }
+  }
+  @media (max-width:480px){
+    body{padding:16px 14px 48px}
+    .panel{padding:16px}
+    .readout{padding:16px}
+    .big{font-size:clamp(30px,10vw,44px)}
+    .result-actions{gap:6px}
+    .copy{font-size:11px;padding:10px}
+    .row{padding:9px 12px;font-size:12px}
+    .formula{padding:10px 12px;font-size:11px}
   }
   @media (max-width:420px){
     .fields{grid-template-columns:1fr}
@@ -494,7 +533,7 @@
         <div class="density-note">Yoğunluk: <b id="densityText">7,85</b> g/cm³</div>
         <div id="customWrap" style="display:none;margin-top:12px">
           <label for="customDensity" style="font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);display:block;margin-bottom:5px">Kendi yoğunluğun (g/cm³)</label>
-          <input type="number" id="customDensity" value="7.85" step="0.01" min="0.1">
+          <input type="number" id="customDensity" value="7.85" step="0.01" min="0.1" inputmode="decimal">
         </div>
       </div>
 
